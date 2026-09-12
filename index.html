@@ -130,25 +130,23 @@ status.innerHTML="Uploading...";
 
 const base64=data.split(",")[1];
 
-const r=await fetch(API,{
-method:"POST",
-body:JSON.stringify({
-image:base64
-})
+const r = await fetch(API, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({ image: base64 })
 });
 
-const json=await r.json();
+const text = await r.text();
+console.log(text);
 
-if(json.success){
-
-status.innerHTML="✓ Saved!";
-
-}else{
-
-status.innerHTML="Upload failed";
-
+try {
+  const json = JSON.parse(text);
+  status.innerHTML = json.success ? "✓ Saved!" : json.error;
+} catch {
+  status.innerHTML = text;
 }
-
 };
 
 </script>
