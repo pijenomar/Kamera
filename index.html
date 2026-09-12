@@ -1,87 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wedding Camera</title>
 
 <style>
-*{box-sizing:border-box;}
-
 body{
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
   background:#F7F3EC;
-  color:#3D352E;
+  font-family:Arial,sans-serif;
+  display:flex;
+  justify-content:center;
 }
-
 .container{
+  width:100%;
   max-width:430px;
-  margin:auto;
   padding:20px;
 }
-
-.header{
-  text-align:center;
-  margin-bottom:20px;
-}
-
-.header h1{
+h1{
   font-family:Georgia,serif;
-  font-size:34px;
-  margin:8px 0 4px;
+  text-align:center;
+  margin-bottom:4px;
 }
-
-.header p{
-  color:#7B6E63;
-  margin:0;
+p{
+  text-align:center;
+  color:#6F655D;
 }
-
-#camera{
+video{
   width:100%;
-  aspect-ratio:3/4;
+  border-radius:18px;
   background:#000;
-  border-radius:20px;
+  aspect-ratio:3/4;
   object-fit:cover;
 }
-
 button{
   width:100%;
+  padding:16px;
+  margin-top:14px;
+  font-size:18px;
   border:none;
   border-radius:999px;
-  padding:16px;
-  font-size:18px;
-  font-weight:600;
-  cursor:pointer;
-}
-
-#startBtn{
   background:#3D352E;
-  color:#fff;
-  margin-top:18px;
+  color:white;
+  font-weight:bold;
 }
-
-#captureBtn{
-  background:#fff;
-  color:#3D352E;
-  border:2px solid #3D352E;
-  margin-top:18px;
-  display:none;
-}
-
+#captureBtn{ display:none; }
 #status{
+  margin-top:16px;
   text-align:center;
-  margin-top:18px;
+  font-weight:bold;
   min-height:24px;
-  font-weight:600;
-}
-
-.footer{
-  margin-top:28px;
-  text-align:center;
-  color:#8A8177;
-  font-size:13px;
 }
 </style>
 </head>
@@ -90,43 +58,33 @@ button{
 
 <div class="container">
 
-  <div class="header">
-    <h1>Hafizan & Nabihah</h1>
-    <p>Help us capture our special day ♡</p>
-  </div>
+<h1>Hafizan & Nabihah</h1>
+<p>Help us capture our special day ♡</p>
 
-  <video id="camera" autoplay playsinline muted></video>
-  <canvas id="canvas" style="display:none"></canvas>
+<video id="video" autoplay playsinline muted></video>
+<canvas id="canvas" hidden></canvas>
 
-  <button id="startBtn">Start Camera</button>
-  <button id="captureBtn">📸 Take Photo</button>
+<button id="startBtn">Start Camera</button>
+<button id="captureBtn">📸 Take Photo</button>
 
-  <div id="status"></div>
-
-  <div class="footer">
-    No app required • Photos upload automatically
-  </div>
+<div id="status"></div>
 
 </div>
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbw3_yije37yBkn7GvgFJE8wEK9luOKedVJP8TlOTGU2x5cXQZthfEsPEdh8XwDcc6kDfA/exec";
 
-const video = document.getElementById("camera");
+const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const status = document.getElementById("status");
 const startBtn = document.getElementById("startBtn");
 const captureBtn = document.getElementById("captureBtn");
 
-let stream = null;
+let stream;
 
-// Start camera only after user taps (required by iPhone Safari)
-startBtn.addEventListener("click", async () => {
-
-  status.textContent = "";
-
-  try{
-
+// Start camera
+startBtn.onclick = async () => {
+  try {
     stream = await navigator.mediaDevices.getUserMedia({
       video:{
         facingMode:{ ideal:"environment" },
@@ -139,35 +97,34 @@ startBtn.addEventListener("click", async () => {
     video.srcObject = stream;
     await video.play();
 
-    startBtn.style.display="none";
-    captureBtn.style.display="block";
+    startBtn.style.display = "none";
+    captureBtn.style.display = "block";
+    status.textContent = "";
 
-  }catch(err){
-
-    status.textContent = "Camera unavailable";
+  } catch(err){
+    status.textContent = "Camera error: " + err.message;
     console.error(err);
-
   }
+};
 
-});
-
-// Take photo
-captureBtn.addEventListener("click", async () => {
+// Capture photo
+captureBtn.onclick = async () => {
 
   try{
 
-    captureBtn.disabled=true;
-    status.textContent="Uploading...";
+    captureBtn.disabled = true;
+    status.textContent = "Uploading...";
 
-    canvas.width=video.videoWidth;
-    canvas.height=video.videoHeight;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-    const ctx=canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
     ctx.drawImage(video,0,0);
 
-    const dataURL=canvas.toDataURL("image/jpeg",0.92);
+    const dataURL = canvas.toDataURL("image/jpeg",0.92);
 
-    const base64=dataURL.split(",")[1];
+    // Create base64 string
+    const base64 = dataURL.split(",")[1];
 
     const response = await fetch(API,{
       method:"POST",
@@ -179,33 +136,26 @@ captureBtn.addEventListener("click", async () => {
       })
     });
 
-    const text=await response.text();
-    console.log(text);
-
-    const json=JSON.parse(text);
+    const json = await response.json();
 
     if(json.success){
-
-      status.textContent="✓ Photo saved!";
-      captureBtn.disabled=false;
-
+      status.textContent = "✓ Photo saved!";
     }else{
-
-      status.textContent="Upload failed";
-      captureBtn.disabled=false;
-      console.log(json);
-
+      status.textContent = json.error || "Upload failed";
     }
 
   }catch(err){
 
-    status.textContent="Connection failed";
-    captureBtn.disabled=false;
+    status.textContent = "Upload failed";
     console.error(err);
+
+  }finally{
+
+    captureBtn.disabled = false;
 
   }
 
-});
+};
 </script>
 
 </body>
