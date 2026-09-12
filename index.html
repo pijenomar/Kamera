@@ -126,24 +126,22 @@ canvas.getContext("2d").drawImage(video,0,0);
 
 const data=canvas.toDataURL("image/jpeg",0.92);
 
-status.innerHTML="Uploading...";
+status.innerHTML = "Uploading...";
 
-const base64=data.split(",")[1];
-
-const r = await fetch(API, {
+const response = await fetch(API, {
   method: "POST",
+  mode: "cors",
   headers: {
-    "Content-Type": "application/json"
+    "Content-Type": "text/plain"
   },
-  body: JSON.stringify({ image: base64 })
+  body: JSON.stringify({
+    image: base64
+  })
 });
 
-const text = await r.text();
-console.log(text);
+const json = await response.json();
 
-try {
-  const json = JSON.parse(text);
-  status.innerHTML = json.success ? "✓ Saved!" : json.error;
+status.innerHTML = json.success ? "✓ Saved!" : json.error;
 } catch {
   status.innerHTML = text;
 }
