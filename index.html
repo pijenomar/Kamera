@@ -206,9 +206,7 @@ startBtn.onclick = async () => {
 
 // Capture photo
 captureBtn.onclick = async () => {
-
-  try{
-
+  try {
     captureBtn.disabled = true;
     status.textContent = "Uploading...";
 
@@ -216,38 +214,33 @@ captureBtn.onclick = async () => {
     canvas.height = video.videoHeight;
 
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(video,0,0);
+    ctx.drawImage(video, 0, 0);
 
-    const base64 = canvas
-      .toDataURL("image/jpeg",0.92)
-      .split(",")[1];
+    const base64 = canvas.toDataURL("image/jpeg", 0.92).split(",")[1];
 
-    const response = await fetch(API,{
-      method:"POST",
-      headers:{
-        "Content-Type":"text/plain;charset=utf-8"
+    const response = await fetch(API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
       },
-      body:JSON.stringify({
-        image:base64
-      })
+      body: JSON.stringify({ image: base64 })
     });
 
     const json = await response.json();
 
-    if(json.success){
+    if (json.success === true) {
       cameraScreen.style.display = "none";
       successScreen.style.display = "block";
-    }else{
+    } else {
       status.textContent = json.error || "Upload failed";
     }
 
-  }catch(err){
+  } catch (err) {
     status.textContent = "Upload failed";
     console.error(err);
-  }finally{
+  } finally {
     captureBtn.disabled = false;
   }
-
 };
 
 // Take another photo
