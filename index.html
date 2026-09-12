@@ -1,55 +1,124 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Wedding Camera</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hafizan & Nabihah Wedding Camera</title>
 
 <style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
 body{
   margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
   background:#F7F3EC;
-  font-family:Arial,sans-serif;
+  color:#3D352E;
+}
+
+.container{
+  max-width:430px;
+  margin:0 auto;
+  padding:24px 20px;
+  min-height:100vh;
   display:flex;
+  flex-direction:column;
   justify-content:center;
 }
-.container{
-  width:100%;
-  max-width:430px;
-  padding:20px;
-}
+
 h1{
   font-family:Georgia,serif;
   text-align:center;
-  margin-bottom:4px;
+  font-size:34px;
+  margin:0;
 }
-p{
+
+.subtitle{
   text-align:center;
-  color:#6F655D;
+  color:#7B6E63;
+  margin:8px 0 24px;
 }
+
 video{
   width:100%;
-  border-radius:18px;
-  background:#000;
   aspect-ratio:3/4;
   object-fit:cover;
+  background:#000;
+  border-radius:22px;
 }
+
 button{
   width:100%;
-  padding:16px;
-  margin-top:14px;
-  font-size:18px;
   border:none;
   border-radius:999px;
-  background:#3D352E;
-  color:white;
-  font-weight:bold;
+  padding:16px;
+  font-size:18px;
+  font-weight:600;
+  cursor:pointer;
 }
-#captureBtn{ display:none; }
+
+#startBtn{
+  background:#3D352E;
+  color:#FFF;
+  margin-top:20px;
+}
+
+#captureBtn{
+  display:none;
+  background:#3D352E;
+  color:#FFF;
+  margin-top:20px;
+}
+
 #status{
-  margin-top:16px;
   text-align:center;
-  font-weight:bold;
+  margin-top:18px;
   min-height:24px;
+  font-weight:600;
+  color:#6B5B4D;
+}
+
+/* Success Screen */
+
+#successScreen{
+  display:none;
+  text-align:center;
+}
+
+.tickCircle{
+  width:170px;
+  height:170px;
+  margin:0 auto 34px;
+  border-radius:50%;
+  background:#D8EED4;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.tick{
+  color:#146C43;
+  font-size:92px;
+  font-weight:bold;
+  line-height:1;
+}
+
+.successTitle{
+  font-family:Georgia,serif;
+  font-size:44px;
+  margin:0 0 50px;
+}
+
+#againBtn{
+  background:#4A3427;
+  color:white;
+}
+
+.hidden{
+  display:none;
 }
 </style>
 </head>
@@ -58,16 +127,40 @@ button{
 
 <div class="container">
 
-<h1>Hafizan & Nabihah</h1>
-<p>Help us capture our special day ♡</p>
+  <!-- Camera Screen -->
+  <div id="cameraScreen">
 
-<video id="video" autoplay playsinline muted></video>
-<canvas id="canvas" hidden></canvas>
+    <h1>Hafizan & Nabihah</h1>
+    <div class="subtitle">
+      Help us capture our special day ♡
+    </div>
 
-<button id="startBtn">Start Camera</button>
-<button id="captureBtn">📸 Take Photo</button>
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas" hidden></canvas>
 
-<div id="status"></div>
+    <button id="startBtn">Start Camera</button>
+    <button id="captureBtn">📸 Take Photo</button>
+
+    <div id="status"></div>
+
+  </div>
+
+  <!-- Success Screen -->
+  <div id="successScreen">
+
+    <div class="tickCircle">
+      <div class="tick">✓</div>
+    </div>
+
+    <div class="successTitle">
+      Memory Captured
+    </div>
+
+    <button id="againBtn">
+      Take Another Photo
+    </button>
+
+  </div>
 
 </div>
 
@@ -80,11 +173,15 @@ const status = document.getElementById("status");
 const startBtn = document.getElementById("startBtn");
 const captureBtn = document.getElementById("captureBtn");
 
+const cameraScreen = document.getElementById("cameraScreen");
+const successScreen = document.getElementById("successScreen");
+const againBtn = document.getElementById("againBtn");
+
 let stream;
 
 // Start camera
 startBtn.onclick = async () => {
-  try {
+  try{
     stream = await navigator.mediaDevices.getUserMedia({
       video:{
         facingMode:{ ideal:"environment" },
@@ -101,8 +198,8 @@ startBtn.onclick = async () => {
     captureBtn.style.display = "block";
     status.textContent = "";
 
-  } catch(err){
-    status.textContent = "Camera error: " + err.message;
+  }catch(err){
+    status.textContent = "Camera unavailable";
     console.error(err);
   }
 };
@@ -121,10 +218,9 @@ captureBtn.onclick = async () => {
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video,0,0);
 
-    const dataURL = canvas.toDataURL("image/jpeg",0.92);
-
-    // Create base64 string
-    const base64 = dataURL.split(",")[1];
+    const base64 = canvas
+      .toDataURL("image/jpeg",0.92)
+      .split(",")[1];
 
     const response = await fetch(API,{
       method:"POST",
@@ -139,22 +235,26 @@ captureBtn.onclick = async () => {
     const json = await response.json();
 
     if(json.success){
-      status.textContent = "✓ Photo saved!";
+      cameraScreen.style.display = "none";
+      successScreen.style.display = "block";
     }else{
       status.textContent = json.error || "Upload failed";
     }
 
   }catch(err){
-
     status.textContent = "Upload failed";
     console.error(err);
-
   }finally{
-
     captureBtn.disabled = false;
-
   }
 
+};
+
+// Take another photo
+againBtn.onclick = () => {
+  successScreen.style.display = "none";
+  cameraScreen.style.display = "block";
+  status.textContent = "";
 };
 </script>
 
